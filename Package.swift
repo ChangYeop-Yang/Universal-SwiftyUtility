@@ -45,11 +45,14 @@ let package = Package(
     // .package(url: /* package url */, from: "1.0.0"),
     dependencies: [
         .package(url: RemotePackage.SwiftLog.path, RemotePackage.SwiftLog.from),
+        .package(url: RemotePackage.SwiftAtomics.path, RemotePackage.SwiftAtomics.from),
     ],
     // Targets are the basic building blocks of a package. A target can define a module or a test suite.
     // Targets can depend on other targets in this package, and on products in packages this package depends on.
     targets: [
-        .target(name: InfoPackage.PackageName, dependencies: [RemotePackage.SwiftLog.product], path: InfoPackage.PackagePath),
+        .target(name: InfoPackage.PackageName,
+                dependencies: [RemotePackage.SwiftLog.product, RemotePackage.SwiftAtomics.product],
+                path: InfoPackage.PackagePath),
     ],
     // The list of Swift versions with which this package is compatible.
     swiftLanguageVersions: [.v5]
@@ -94,12 +97,17 @@ public enum RemotePackage: String, CaseIterable, PackageProtocol {
     /// [swift-docc-plugin - GitHub](https://github.com/apple/swift-docc-plugin)
     case SwiftDocC = "SwiftDocCPlugin"
     
+    /// [Swift Atomics - GitHub](https://github.com/apple/swift-atomics)
+    case SwiftAtomics = "swift-atomics"
+    
     public var path: String {
         switch self {
         case .SwiftLog:
             return "https://github.com/apple/swift-log.git"
         case .SwiftDocC:
             return "https://github.com/apple/swift-docc-plugin.git"
+        case .SwiftAtomics:
+            return "https://github.com/apple/swift-atomics.git"
         }
     }
     
@@ -109,6 +117,8 @@ public enum RemotePackage: String, CaseIterable, PackageProtocol {
             return .upToNextMajor(from: "1.0.0")
         case .SwiftDocC:
             return .upToNextMajor(from: "1.1.0")
+        case .SwiftAtomics:
+            return .upToNextMajor(from: "1.0.3")
         }
     }
     
@@ -120,6 +130,9 @@ public enum RemotePackage: String, CaseIterable, PackageProtocol {
         case .SwiftDocC:
             let condition = TargetDependencyCondition.when(platforms: InfoPackage.PackagePlatform)
             return .product(name: self.name, package: self.name, condition: condition)
+        case .SwiftAtomics:
+            let condition = TargetDependencyCondition.when(platforms: InfoPackage.PackagePlatform)
+            return .product(name: "Atomics", package: self.name, condition: condition)
         }
     }
     
