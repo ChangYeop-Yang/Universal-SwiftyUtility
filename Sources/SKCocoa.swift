@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Universal-SwiftyUtility. All rights reserved.
+ * Copyright (c) 2023 ChangYeop-Yang. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,19 +24,19 @@
 #if os(macOS)
 import Cocoa
 
-public class SWCocoa: NSObject {
+public class SKCocoa: NSObject {
     
     // MARK: - Object Properties
-    public static var label: String = "com.SwiftyUtility.SWCocoa"
+    public static var label: String = "com.SystemKit.SKCocoa"
     public static var identifier: String = "7304B2E2-9AB3-4046-8D9C-0B1E6A981874"
-    public static let shared: SWCocoa = SWCocoa()
+    public static let shared: SKCocoa = SKCocoa()
     
     // MARK: - Initalize
     private override init() { super.init() }
 }
 
-// MARK: - Public Extension SWCocoa
-public extension SWCocoa {
+// MARK: - Public Extension SKCocoa
+public extension SKCocoa {
 
     /**
         `NSStoryboard`를 통해서 제작 된 `NSViewController`를 가져올 수 있는 함수입니다.
@@ -48,7 +48,7 @@ public extension SWCocoa {
     final func loadViewController<T>(name: String, withIdentifier: String, type: T.Type) -> Optional<T> {
         
         #if DEBUG
-            NSLog("[%@][%@] Action, Load NSViewController: %@", SWCocoa.label, SWCocoa.identifier, withIdentifier)
+            NSLog("[%@][%@] Action, Load NSViewController: %@", SKCocoa.label, SKCocoa.identifier, withIdentifier)
         #endif
         
         let storyboard = NSStoryboard(name: name, bundle: nil)
@@ -65,7 +65,7 @@ public extension SWCocoa {
     final func loadCustomView<T>(name stringLiteral: String, type: T.Type) -> Optional<T> {
 
         #if DEBUG
-            NSLog("[%@][%@] Action, Load CustomView: %@", SWCocoa.label, SWCocoa.identifier, stringLiteral)
+            NSLog("[%@][%@] Action, Load CustomView: %@", SKCocoa.label, SKCocoa.identifier, stringLiteral)
         #endif
 
         var topLevelObjects: Optional<NSArray> = nil

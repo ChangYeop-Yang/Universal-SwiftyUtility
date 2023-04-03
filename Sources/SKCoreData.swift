@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Universal-SwiftyUtility. All rights reserved.
+ * Copyright (c) 2022 Universal-SystemKit. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,48 +20,43 @@
  * THE SOFTWARE.
  */
 
-#if os(macOS) || os(iOS)
+// swiftlint:disable all
+#if os(iOS) || os(macOS)
 import CoreData
 import Foundation
 
-public class SWCoreData: NSObject {
+public class SKCoreData: NSObject {
     
     // MARK: - Typealias
     public typealias CoreDataErrorHandler = (NSError) -> Swift.Void
     private typealias CoreDataAttribute = (modelPath: String, persistentPath: String)
     
     // MARK: - Object Properties
-    public static let label: String = "com.SwiftyUtility.SWCoreData"
-    public static let identifier: String = "104C0159-3216-406D-9A2A-21B5B0532276"
+    public static let label: String = "com.SystemKit.SKCoreData"
+    public static let identifier: String = UUID().uuidString
     
-    private let implementQueue = DispatchQueue(label: SWCoreData.label, qos: .userInitiated, attributes: .concurrent)
+    private let implementQueue = DispatchQueue(label: SKCoreData.label, qos: .userInitiated, attributes: .concurrent)
     private var attribute: Optional<CoreDataAttribute> = nil
     private var inContext: Optional<NSManagedObjectContext> = nil
     
     // MARK: - Initalize
     @available(macOS 10.12, *)
     public init(modelPath: String, persistentPath: String) {
-        NSLog("[%@][%@] init(modelPath: String, persistentPath: String)", SWCoreData.label, SWCoreData.identifier)
-        
         self.attribute = CoreDataAttribute(modelPath, persistentPath)
     }
     
     public init(managedContext: NSManagedObjectContext) {
-        NSLog("[%@][%@] managedContext: NSManagedObjectContext", SWCoreData.label, SWCoreData.identifier)
-        
         self.inContext = managedContext
     }
     
     public convenience init(concurrencyType: NSManagedObjectContextConcurrencyType) {
-        NSLog("[%@][%@] concurrencyType: NSManagedObjectContextConcurrencyType", SWCoreData.label, SWCoreData.identifier)
-        
         let managedContext = NSManagedObjectContext(concurrencyType: concurrencyType)
         self.init(managedContext: managedContext)
     }
 }
 
-// MARK: - Private Extension SWCoreData
-private extension SWCoreData {
+// MARK: - Private Extension SKCoreData
+private extension SKCoreData {
     
     final func createRequest<T: NSManagedObject>(entity: T.Type,
                                                  predicate: NSPredicate? = nil,
@@ -95,16 +90,16 @@ private extension SWCoreData {
     }
 }
 
-// MARK: - Public Extension SWCoreData With Properties
-public extension SWCoreData {
+// MARK: - Public Extension SKCoreData With Properties
+public extension SKCoreData {
     
     var managedContext: Optional<NSManagedObjectContext> {
         self.implementQueue.sync { return self.inContext }
     }
 }
 
-// MARK: - Public Extension SWCoreData With Method
-public extension SWCoreData {
+// MARK: - Public Extension SKCoreData With Method
+public extension SKCoreData {
     
     @available(macOS 10.12, *)
     @discardableResult

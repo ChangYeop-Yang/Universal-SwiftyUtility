@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Universal-SwiftyUtility. All rights reserved.
+ * Copyright (c) 2023 ChangYeop-Yang. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,31 +24,11 @@
 #if os(iOS) || os(macOS)
 import Foundation
 
-@propertyWrapper
-public struct SWUserDefault<Value> {
+public struct SwiftyUtility {
     
-    public static let label: String = "com.SwiftyUtility.SWUserDefault"
-    public static let identifier: String = "F83F639D-DC65-414D-A69C-0EC829DE53A1"
-    
-    // MARK: - Struct Properties
-    private let forKey: String
-    private let defaultValue: Optional<Value>
-    
-    // Property Wrapper 필수 구현 Property
-    public var wrappedValue: Optional<Value> {
-        get { UserDefaults.standard.object(forKey: self.forKey) as? Value ?? self.defaultValue }
-        set { UserDefaults.standard.setValue(newValue, forKey: self.forKey) }
-    }
-    
-    // MARK: - Initalize
-    public init(forKey: String, defaultValue: Optional<Value> = nil) {
-        
-        #if DEBUG
-            NSLog("[%@][%@] Initalize", SWUserDefault.label, SWUserDefault.identifier)
-        #endif
-        
-        self.forKey = forKey
-        self.defaultValue = defaultValue
+    public private(set) var text = "Hello, World!"
+
+    public init() {
     }
 }
 #endif

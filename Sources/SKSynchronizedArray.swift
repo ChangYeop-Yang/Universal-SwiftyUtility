@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 Universal-SwiftyUtility. All rights reserved.
+ * Copyright (c) 2023 Universal-SystemKit. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -20,21 +20,22 @@
  * THE SOFTWARE.
  */
 
+// swiftlint:disable all
 #if os(iOS) || os(macOS)
 import Foundation
 
-public class SWSynchronizedArray<T: Hashable>: NSObject {
+public class SKSynchronizedArray<T: Hashable>: NSObject {
     
     // MARK: - Typeaalise
-    public typealias SWSynchronizedArray = Array<T>
+    public typealias SynchronizedArrayType = Array<T>
     
     // MARK: - Object Properties
     private var array: SynchronizedArrayType = Array.init()
-    private let implementQueue = DispatchQueue(label: "com.SwiftyUtility.SWSynchronizedArray", attributes: .concurrent)
+    private let implementQueue = DispatchQueue(label: "com.SystemKit.SKSynchronizedArray", attributes: .concurrent)
 }
 
-// MARK: - Private Extension SWSynchronizedArray
-private extension SWSynchronizedArray {
+// MARK: - Private Extension SKSynchronizedArray
+private extension SKSynchronizedArray {
     
     final func reader<U>(_ block: (SynchronizedArrayType) throws -> U) rethrows -> U {
         try self.implementQueue.sync { try block(self.array) }
@@ -46,8 +47,8 @@ private extension SWSynchronizedArray {
     }
 }
 
-// MARK: - Public Extension SWSynchronizedArray With Properties
-public extension SWSynchronizedArray {
+// MARK: - Public Extension SKSynchronizedArray With Properties
+public extension SKSynchronizedArray {
     
     // MARK: Subscript
     subscript(atIndex: Int) -> T {
