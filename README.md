@@ -2,6 +2,12 @@
 
 A description of this package.
 
+# License
+
+`SwiftyUtility` is released under the MIT license. [See LICENSE]([https://github.com/ChangYeop-Yang/Apple-SystemKit/blob/main/LICENSE](https://github.com/ChangYeop-Yang/Universal-SwiftyUtility/blob/main/LICENSE)) for details.
+
+</br>
+
 ```TEXT
 MIT License
 
