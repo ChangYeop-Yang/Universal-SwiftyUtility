@@ -5,6 +5,7 @@
 ![Swift Package Manager - Shields.io](https://img.shields.io/badge/Swift%20Package%20Manager-Compatible-success)
 ![Manually - Shields.io](https://img.shields.io/badge/Manually-Compatible-success)
 ![Github Repository - Shields.io](https://img.shields.io/badge/Github%20Repository-Compatible-success)
+![License - Shields.io](https://img.shields.io/github/license/ChangYeop-Yang/Universal-SwiftyUtility)
 
 A description of this package.
 
