@@ -9,6 +9,36 @@
 
 A description of this package.
 
+# Installation
+
+The installation method for `Universal-SwiftyUtility` can be done through the [Swift Package Manager](https://www.swift.org/package-manager) or the [Github Repository](https://docs.github.com/en/repositories), and the details are as follows.
+
+### Manually
+
+If you prefer not to use any of the aforementioned dependency managers, you can integrate `Universal-SwiftyUtility` into your project manually.
+
+### Github Repository
+
+You can pull the `Universal-SwiftyUtility` Github Repository and include the `Universal-SwiftyUtility` to build a dynamic or static library.
+
+### Swift Package Manager
+
+The Swift Package Manager is a tool for automating the distribution of Swift code and is integrated into the swift compiler.
+
+Once you have your Swift package set up, adding `Universal-SwiftyUtility` as a dependency is as easy as adding it to the dependencies value of your Package.swift.
+
+1. From the Xcode menu, click File → Swift Packages → Add Package Dependency.
+
+2. In the dialog that appears, enter the repository URL: https://github.com/ChangYeop-Yang/Universal-SwiftyUtility.
+
+3. In Branch, Enter text "master".
+
+```Swift
+dependencies: [
+    .package(url: "https://github.com/ChangYeop-Yang/Universal-SwiftyUtility", .branch("master"))
+]
+```
+
 # Requirements
 
 | Platform | Minimum Swift Version | Installation | Status |
