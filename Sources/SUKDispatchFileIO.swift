@@ -22,6 +22,7 @@
 
 // swiftlint:disable all
 #if os(iOS) || os(macOS)
+import Darwin
 import Dispatch
 import Foundation
 
@@ -38,7 +39,6 @@ import Logging
     public static var identifier: String = "870EBBA7-3167-4147-BE3A-82E0C4A108A2"
     
     private let implementQueue: DispatchQueue
-    private let serialQueue = DispatchQueue(label: "com.SwiftyUtility.serial.SUKDispatchFileIO")
     
     // MARK: - Initalize
     public init(qualityOfService: DispatchQoS.QoSClass = .default) {
@@ -49,7 +49,38 @@ import Logging
 // MARK: - Private Extension SUKDispatchFileIO
 private extension SUKDispatchFileIO {
     
-    final func createFileChannel(filePath: String, oflag: Int32) -> Optional<DispatchIO> {
+    static func closeChannel(channel: DispatchIO, filePath: String, error: Int32) {
+        
+        channel.close(flags: DispatchIO.CloseFlags.stop)
+        
+        logger.info("[SUKDispatchFileIO][\(filePath)][error: \(error)] Close DispatchIO Operation")
+    }
+    
+    func lockFile(fileDescriptor: Int32) -> Bool {
+                    
+        var lock = flock(l_start: off_t(Int16(F_WRLCK)), l_len: off_t(Int16(SEEK_SET)), l_pid: 0, l_type: 0, l_whence: Int16(getpid()))
+        
+        if fcntl(fileDescriptor, F_SETLK, &lock) == -1 {
+            print("Error: Unable to lock file")
+            return false
+        }
+        
+        return true
+    }
+
+    func unlockFile(fileDescriptor: Int32) -> Bool {
+        
+        var lock = flock(l_start: off_t(Int16(F_UNLCK)), l_len: off_t(Int16(SEEK_SET)), l_pid: 0, l_type: 0, l_whence: Int16(getpid()))
+        
+        if fcntl(fileDescriptor, F_SETLK, &lock) == -1 {
+            print("Error: Unable to unlock file")
+            return false
+        }
+        
+        return true
+    }
+    
+    final func createFileChannel(filePath: String, _ oflag: Int32) -> Optional<DispatchIO> {
         
         let fileDescriptor = open(filePath, oflag)
         
@@ -76,11 +107,19 @@ private extension SUKDispatchFileIO {
 // MARK: - Public Extension SUKDispatchFileIO
 public extension SUKDispatchFileIO {
     
-    final func write(contents: Data, filePath: String, completion: @escaping FileIOWriteCompletion) {
+    /**
+        파일에 대하여 쓰기 작업을 수행합니다.
+        Perform a write operation on the file.
 
-        self.serialQueue.async {
+        - Version: `1.0.0`
+        - Authors: `ChangYeop-Yang`
+        - Parameters:
+            - filePath: 읽기 작업을 수행하는 파일 경로를 입력받는 매개변수
+            - completion: 읽기 작업을 통한 결과물을 전달하는 매개변수
+     */
+    final func write(contents: Data, filePath: String, _ completion: @escaping FileIOWriteCompletion) {
             
-            guard let channel = self.createFileChannel(filePath: filePath, oflag: O_WRONLY | O_CREAT) else { return }
+            guard let channel = self.createFileChannel(filePath: filePath, O_WRONLY | O_CREAT) else { return }
             
             do {
                 try contents.withUnsafeBytes { (pointer: UnsafeRawBufferPointer) throws -> Swift.Void in
@@ -96,9 +135,7 @@ public extension SUKDispatchFileIO {
                             // 쓰기 작업에 수행 한 모든 파일 내용을 전달합니다.
                             completion(error)
                             
-                            // 파일 작업을 위해서 사용 된 File Descriptor 을 닫습니다.
-                            close(channel.fileDescriptor)
-                            logger.info("[SUKDispatchFileIO][\(filePath)] Close O_WRONLY FileDescriptor")
+                            
                         }
                     }
                 }
@@ -107,43 +144,51 @@ public extension SUKDispatchFileIO {
                 logger.error("[SUKDispatchFileIO] \(error.description)")
                 return
             }
-            
-        }
     }
     
-    @discardableResult
-    final func read(filePath: String, completion: @escaping FileIOReadCompletion) -> Bool {
-        
+    /**
+        파일에 대하여 읽기 작업을 수행합니다.
+        Perform a read operation on the file.
+
+        - Version: `1.0.0`
+        - Authors: `ChangYeop-Yang`
+        - Parameters:
+            - filePath: 읽기 작업을 수행하는 파일 경로를 입력받는 매개변수
+            - completion: 읽기 작업을 통한 결과물을 전달하는 매개변수
+     */
+    final func read(filePath: String, _ completion: @escaping FileIOReadCompletion) {
+    
         // 파일 읽기 작업을 수행하기 전에 해당 파일이 실제로 존재하는지 확인합니다.
         guard FileManager.default.fileExists(atPath: filePath) else {
             logger.error("[SUKDispatchFileIO][\(filePath)] The file does not exist at the specified path")
-            return false
+            return
         }
-                
-        guard let channel = createFileChannel(filePath: filePath, oflag: O_RDONLY) else { return false }
-                
-        var rawData = Data()
+    
+        // 읽기 작업을 수행하기 위한 DispatchIO 생성합니다.
+        guard let channel = createFileChannel(filePath: filePath, O_RDONLY) else { return }
         
+        var rawData = Data()
+                
         channel.read(offset: off_t.zero, length: Int.max, queue: self.implementQueue) { done, data, error in
-
-            if error == Int32.zero {
-
-                // 정상적으로 파일로부터 데이터를 읽어들이는 경우
-                if let contentsOf = data { rawData.append(contentsOf: contentsOf) }
-
-                // 정상적으로 파일 읽기 작업이 완료 된 경우에 파일 내용을 전달합니다.
-                if done {
-                    // 읽어들인 모든 파일 내용을 전달합니다.
-                    completion(rawData, error)
-                    
-                    // 파일 작업을 위해서 사용 된 File Descriptor 을 닫습니다.
-                    close(channel.fileDescriptor)
-                    logger.info("[SUKDispatchFileIO][\(filePath)] Close O_RDONLY FileDescriptor")
-                }
+            
+            // 파일 읽기 작업에 오류가 발생한 경우에는 읽기 작업을 종료합니다.
+            guard error == Int32.zero else {
+                SUKDispatchFileIO.closeChannel(channel: channel, filePath: filePath, error: error)
+                return
+            }
+            
+            // 정상적으로 파일로부터 데이터를 읽어들이는 경우
+            if let contentsOf = data { rawData.append(contentsOf: contentsOf) }
+            
+            // 정상적으로 파일 읽기 작업이 완료 된 경우에 파일 내용을 전달합니다.
+            if done {
+                // 읽어들인 모든 파일 내용을 전달합니다.
+                completion(rawData, error)
+                
+                // 파일 읽기 작업을 위해서 생성 한 DispatchIO을 닫습니다.
+                SUKDispatchFileIO.closeChannel(channel: channel, filePath: filePath, error: error)
             }
         }
-        
-        return true
     }
 }
 #endif
