@@ -50,34 +50,14 @@ import Logging
 private extension SUKDispatchFileIO {
     
     static func closeChannel(channel: DispatchIO, filePath: String, error: Int32) {
+
+        flock(channel.fileDescriptor, LOCK_UN)
+        
+        logger.info("")
         
         channel.close(flags: DispatchIO.CloseFlags.stop)
         
         logger.info("[SUKDispatchFileIO][\(filePath)][error: \(error)] Close DispatchIO Operation")
-    }
-    
-    func lockFile(fileDescriptor: Int32) -> Bool {
-                    
-        var lock = flock(l_start: off_t(Int16(F_WRLCK)), l_len: off_t(Int16(SEEK_SET)), l_pid: 0, l_type: 0, l_whence: Int16(getpid()))
-        
-        if fcntl(fileDescriptor, F_SETLK, &lock) == -1 {
-            print("Error: Unable to lock file")
-            return false
-        }
-        
-        return true
-    }
-
-    func unlockFile(fileDescriptor: Int32) -> Bool {
-        
-        var lock = flock(l_start: off_t(Int16(F_UNLCK)), l_len: off_t(Int16(SEEK_SET)), l_pid: 0, l_type: 0, l_whence: Int16(getpid()))
-        
-        if fcntl(fileDescriptor, F_SETLK, &lock) == -1 {
-            print("Error: Unable to unlock file")
-            return false
-        }
-        
-        return true
     }
     
     final func createFileChannel(filePath: String, _ oflag: Int32) -> Optional<DispatchIO> {
@@ -89,13 +69,15 @@ private extension SUKDispatchFileIO {
             return nil
         }
         
+        flock(fileDescriptor, LOCK_EX)
+        
         let channel = DispatchIO(type: .stream, fileDescriptor: fileDescriptor, queue: self.implementQueue) { error in
-            
+
             // DispatchIO를 생성하는 과정 중에 오류가 발생여부를 확인합니다.
             if error != Int32.zero {
                 logger.error("[SUKDispatchFileIO][\(filePath)] Could't create DispatchIO")
             }
-            
+
             // DispatchIO를 생성하지 못하는 경우에는 파일 읽기 또는 쓰기 작업을 수행하기 위한 생성 한 FileDescriptor 종료합니다.
             close(fileDescriptor)
         }
@@ -119,31 +101,34 @@ public extension SUKDispatchFileIO {
      */
     final func write(contents: Data, filePath: String, _ completion: @escaping FileIOWriteCompletion) {
             
-            guard let channel = self.createFileChannel(filePath: filePath, O_WRONLY | O_CREAT) else { return }
+        // 쓰기 작업을 수행하기 위한 DispatchIO 생성합니다.
+        guard let channel = self.createFileChannel(filePath: filePath, O_WRONLY | O_CREAT) else { return }
             
-            do {
-                try contents.withUnsafeBytes { (pointer: UnsafeRawBufferPointer) throws -> Swift.Void in
-                    
-                    guard let baseAddress = pointer.baseAddress else { return }
-                    
-                    let bytes = UnsafeRawBufferPointer(start: baseAddress, count: contents.count)
-                    
-                    channel.write(offset: off_t.zero, data: .init(bytes: bytes), queue: self.implementQueue) { done, data, error in
-                    
-                        // 정상적으로 파일 쓰기 작업이 완료 된 경우에 파일 내용을 전달합니다.
-                        if error == Int32.zero && done {
-                            // 쓰기 작업에 수행 한 모든 파일 내용을 전달합니다.
-                            completion(error)
-                            
-                            
-                        }
+        do {
+            try contents.withUnsafeBytes { (pointer: UnsafeRawBufferPointer) throws -> Swift.Void in
+                
+                guard let baseAddress = pointer.baseAddress else { return }
+                
+                let bytes = UnsafeRawBufferPointer(start: baseAddress, count: contents.count)
+                
+                channel.write(offset: off_t.zero, data: .init(bytes: bytes), queue: self.implementQueue) { done, data, error in
+                
+                    // 정상적으로 파일 쓰기 작업이 완료 된 경우에 파일 내용을 전달합니다.
+                    if error == Int32.zero && done {
+                        // 쓰기 작업에 수행 한 모든 파일 내용을 전달합니다.
+                        completion(error)
+                        
+                        // 파일 쓰기 작업을 위해서 생성 한 DispatchIO을 닫습니다.
+                        SUKDispatchFileIO.closeChannel(channel: channel, filePath: filePath, error: error)
                     }
                 }
-                
-            } catch let error as NSError {
-                logger.error("[SUKDispatchFileIO] \(error.description)")
-                return
             }
+            
+        } catch let error as NSError {
+            
+            logger.error("[SUKDispatchFileIO] \(error.description)")
+            return
+        }
     }
     
     /**
@@ -154,7 +139,7 @@ public extension SUKDispatchFileIO {
         - Authors: `ChangYeop-Yang`
         - Parameters:
             - filePath: 읽기 작업을 수행하는 파일 경로를 입력받는 매개변수
-            - completion: 읽기 작업을 통한 결과물을 전달하는 매개변수
+            - completion: 읽기 작업을 통한 `(Data, Int32) -> Swift.Void` 형태의 결과물을 전달하는 매개변수
      */
     final func read(filePath: String, _ completion: @escaping FileIOReadCompletion) {
     
