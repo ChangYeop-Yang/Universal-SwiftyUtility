@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2023 ChangYeop-Yang. All rights reserved.
+ * Copyright (c) 2022 Universal-SystemKit. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -26,14 +26,14 @@ import Foundation
 
 import Logging
 
-// MARK: - Global Properties
-public let logger: Logger = Logger(label: SwiftyUtility.label)
-
-public struct SwiftyUtility {
+@objc public protocol SUKClass: AnyObject {
     
-    public static let label: String = "com.SwiftyUtility"
+    // MARK: Required Protocol Properties
+    static var label: String { get }
     
-    public init() {
-    }
+    static var identifier: String { get }
+    
+    // MARK: Optaionl Protocol Method
+    @objc optional var implementQueue: DispatchQueue { get set }
 }
 #endif
